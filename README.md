@@ -23,5 +23,6 @@ A production-ready WhatsApp bot that transforms dress photos from mannequins to 
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd whatsapp-gemini-bot
+    git clone https://github.com/abik1221
+    cd whatsapp-gemini-bot
+  
