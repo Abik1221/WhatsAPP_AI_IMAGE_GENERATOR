@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# AWS EC2 Setup Script for WhatsApp + Gemini AI Bot
+
+set -e
+
+echo "🚀 Setting up AWS EC2 instance for WhatsApp Bot..."
+
+# Update system
+sudo apt-get update
+sudo apt-get upgrade -y
+
+# Install Docker
+echo "🐳 Installing Docker..."
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt-get update
+sudo apt-get install -y docker-ce
+
+# Install Docker Compose
+echo "📦 Installing Docker Compose..."
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Create application directory
+echo "📁 Creating application directory..."
+sudo mkdir -p /opt/whatsapp-bot
+sudo chown -R $USER:$USER /opt/whatsapp-bot
+cd /opt/whatsapp-bot
+
+# Create storage directories
+mkdir -p storage/temp storage/logs
+
+# Create docker-compose file
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
+
+services:
+  whatsapp-bot:
+    image: ${DOCKERHUB_USERNAME}/whatsapp-gemini-bot:latest
+    container_name: whatsapp-gemini-bot
+    restart: unless-stopped
+    ports:
+      - "80:8000"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - HOST=0.0.0.0
+      - PORT=8000
+      - WHATSAPP_TOKEN=${WHATSAPP_TOKEN}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
+      - WHATSAPP_APP_ID=${WHATSAPP_APP_ID}
+      - WHATSAPP_APP_SECRET=${WHATSAPP_APP_SECRET}
+      - VERIFY_TOKEN=${VERIFY_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - BASE_URL=${BASE_URL}
+      - MAX_IMAGES_PER_USER=5
+      - REQUEST_TIMEOUT=30
+      - MAX_FILE_SIZE=10485760
+    volumes:
+      - ./storage:/app/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+EOF
+
+# Create environment file template
+cat > .env.template << 'EOF'
+# Docker Hub
+DOCKERHUB_USERNAME=your_dockerhub_username
+
+# WhatsApp API
+WHATSAPP_TOKEN=your_whatsapp_token
+WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
+WHATSAPP_APP_ID=your_app_id
+WHATSAPP_APP_SECRET=your_app_secret
+VERIFY_TOKEN=your_verify_token
+
+# Gemini AI
+GEMINI_API_KEY=your_gemini_api_key
+
+# Application
+BASE_URL=https://your-ec2-public-ip-or-domain
+
+EOF
+
+echo "✅ EC2 setup completed!"
+echo ""
+echo "📋 Next steps:"
+echo "1. Copy .env.template to .env"
+echo "2. Edit .env with your actual configuration"
+echo "3. Run: docker-compose up -d"
+echo "4. Check logs: docker-compose logs -f"
+echo ""
+echo "🔧 For CI/CD deployment:"
+echo "   - Add your EC2 instance details to GitHub Secrets"
+echo "   - Push to main branch to trigger auto-deployment"
