@@ -5,7 +5,7 @@ WhatsApp Business API service for handling webhooks, messages, and media
 import httpx
 import logging
 import asyncio
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List, Tuple, AsyncGenerator
 from pathlib import Path
 import aiofiles
 import magic
@@ -495,7 +495,7 @@ class WhatsAppService:
 whatsapp_service = WhatsAppService()
 
 
-async def get_whatsapp_service() -> WhatsAppService:
+async def get_whatsapp_service() -> AsyncGenerator[WhatsAppService, None]:
     """
     Dependency function for FastAPI to get WhatsApp service instance
     """

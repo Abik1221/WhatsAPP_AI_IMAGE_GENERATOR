@@ -6,7 +6,7 @@ import base64
 import httpx
 import logging
 import asyncio
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, AsyncGenerator
 import json
 from fastapi import HTTPException
 
@@ -498,7 +498,7 @@ class GeminiService:
 gemini_service = GeminiService()
 
 
-async def get_gemini_service() -> GeminiService:
+async def get_gemini_service() -> AsyncGenerator[GeminiService, None]:
     """
     Dependency function for FastAPI to get Gemini service instance
     """
